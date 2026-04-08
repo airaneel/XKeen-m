@@ -40,7 +40,8 @@ register_xkeen_initd() {
     old_initd_file="${initd_dir}/S24xray"
     pre_initd_file="${initd_dir}/S99xkeen"
     old_start_file="${initd_dir}/S99xkeenstart"
-    script_file="${xinstall_dir}/07_install_register/04_register_init.sh" 
+    init_modules_dir="${xinstall_dir}/07_install_register/init"
+    assemble_script="${init_modules_dir}/_assemble.sh"
     current_datetime=$(date "+%Y-%m-%d_%H-%M-%S")
     variables_to_extract="name_client name_policy table_id table_mark custom_mark dscp_exclude dscp_proxy ipv4_proxy ipv4_exclude ipv6_proxy ipv6_exclude proxy_dns proxy_router start_attempts check_fd arm64_fd other_fd delay_fd ipv6_support extended_msg backup aghfix"
     source_main_backup=""
@@ -63,7 +64,10 @@ register_xkeen_initd() {
         fi
     fi
 
-    cp "$script_file" "$initd_file" || exit 1
+    # Сборка S05xkeen из модульных файлов в init/.
+    # Каждый модуль ≤200 строк, отвечает за один топик (логирование, валидация,
+    # firewall, lifecycle, ...). _assemble.sh конкатенирует их в правильном порядке.
+    sh "$assemble_script" > "$initd_file" || exit 1
 
     if [ -n "$source_main_backup" ] || [ -n "$source_start_backup" ]; then
         autostart_val=""
