@@ -6,6 +6,7 @@ xinstall_dir="$script_dir/.xkeen/02_install"
 xdelete_dir="$script_dir/.xkeen/03_delete"
 xtools_dir="$script_dir/.xkeen/04_tools"
 xtests_dir="$script_dir/.xkeen/05_tests"
+xdispatch_dir="$script_dir/.xkeen/06_dispatch"
 main_dir="$script_dir/.xkeen"
 
 # Модуль информации
@@ -25,3 +26,6 @@ main_dir="$script_dir/.xkeen"
 
 # Модуль справки
 . "$main_dir/about.sh"
+
+# CLI-диспетчер: cmd_<command>() функции, вызываемые из главного xkeen
+. "$xdispatch_dir/00_dispatch_import.sh"
