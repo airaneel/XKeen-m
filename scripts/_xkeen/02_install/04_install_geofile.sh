@@ -5,6 +5,9 @@ process_geo_file() {
     local display_name="$3"
     local update_flag="$4"
 
+    # Гарантируем, что use_direct/gh_proxy инициализированы (см. download_xkeen).
+    test_github
+
     local temp_file=$(mktemp)
     local min_size=24576  # 24 KB
 

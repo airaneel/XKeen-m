@@ -2,6 +2,9 @@
 install_geoipset_lst() {
     mkdir -p "$ipset_cfg" || { echo "Ошибка: Не удалось создать директорию $ipset_cfg"; exit 1; }
 
+    # Гарантируем, что use_direct/gh_proxy инициализированы (см. download_xkeen).
+    test_github
+
     url="$1"
     dest_file="$2"
     display_name="$3"

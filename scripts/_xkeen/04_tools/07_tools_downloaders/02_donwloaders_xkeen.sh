@@ -1,5 +1,10 @@
 # Загрузка XKeen
 download_xkeen() {
+    # Гарантируем, что use_direct/gh_proxy инициализированы. test_github идемпотентен:
+    # если main диспетчер уже его вызвал, это no-op. Без этого вызова URL мог
+    # склеиться как "/https://..." при пустом gh_proxy.
+    test_github
+
     xkeen_dist=$(mktemp)
     mkdir -p "$tmp_dir"
     printf "  ${yellow}Выполняется загрузка${reset} XKeen\n"

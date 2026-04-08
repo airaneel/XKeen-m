@@ -46,11 +46,14 @@ jobs:
 
           find . -type f -o -type l | sed 's|^\./||' | tar -czf "../dist/${ARCHIVE_NAME}" -T -
           find . -type f -o -type l | sed 's|^\./||' | tar -cf "../dist/${ARCHIVE_NAME_TAR}" -T -
+          cd ..
+          sha256sum "dist/${ARCHIVE_NAME}" | awk '{print $1}' > "dist/${ARCHIVE_NAME}.sha256"
+          sha256sum "dist/${ARCHIVE_NAME_TAR}" | awk '{print $1}' > "dist/${ARCHIVE_NAME_TAR}.sha256"
 
       - name: Clean up temporary files
         run: |
           rm -rf scripts_for_release
-          
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
@@ -59,6 +62,8 @@ jobs:
           prerelease: ${{ github.event.inputs.prerelease }}
           files: |
             dist/${{ env.ARCHIVE_NAME }}
+            dist/${{ env.ARCHIVE_NAME }}.sha256
             dist/${{ env.ARCHIVE_NAME_TAR }}
+            dist/${{ env.ARCHIVE_NAME_TAR }}.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

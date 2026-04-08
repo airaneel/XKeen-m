@@ -37,11 +37,14 @@ jobs:
           cd scripts_for_build
           chmod +x xkeen
           find . -type f -o -type l | sed 's|^\./||' | tar -czf "../output/xkeen.tar.gz" -T -
+          cd ..
+          sha256sum output/xkeen.tar.gz | awk '{print $1}' > output/xkeen.tar.gz.sha256
 
       - name: Move archive to test folder in main
         run: |
           mkdir -p test
           mv output/xkeen.tar.gz test/
+          mv output/xkeen.tar.gz.sha256 test/
 
       - name: Clean up temporary files
         run: |
@@ -49,6 +52,6 @@ jobs:
 
       - name: Commit and push archive to test folder
         run: |
-          git add test/xkeen.tar.gz
+          git add test/xkeen.tar.gz test/xkeen.tar.gz.sha256
           git commit -m "[github-actions] automated compiling build" || echo "No changes"
           git push origin main

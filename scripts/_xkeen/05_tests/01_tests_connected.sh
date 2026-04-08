@@ -76,6 +76,13 @@ test_entware() {
 
 # Функция проверки доступности GitHub
 test_github() {
+    # Идемпотентность: если состояние уже определено — выходим без повторной проверки.
+    # Это позволяет downloader'ам безопасно вызывать test_github лениво, не дублируя
+    # сетевые запросы, если main диспетчер уже его вызвал.
+    if [ "$use_direct" = "true" ] || [ -n "$gh_proxy" ]; then
+        return 0
+    fi
+
     use_direct="false"
     gh_proxy=""
     tmp_file="/tmp/gh_check_$$"

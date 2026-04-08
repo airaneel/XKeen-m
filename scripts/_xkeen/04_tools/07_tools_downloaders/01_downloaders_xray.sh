@@ -1,5 +1,8 @@
 # Загрузка Xray
 download_xray() {
+    # Гарантируем, что use_direct/gh_proxy инициализированы (см. download_xkeen).
+    test_github
+
     while true; do
         USE_JSDELIVR=""
         printf "  ${green}Запрос информации${reset} о релизах ${yellow}Xray${reset}\n"
