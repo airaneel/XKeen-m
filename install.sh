@@ -10,7 +10,6 @@ url_stable="https://github.com/jameszeroX/XKeen/releases/latest/download/xkeen.t
 url_beta="https://raw.githubusercontent.com/jameszeroX/XKeen/main/test/xkeen.tar.gz"
 archive_name="xkeen.tar.gz"
 sha256_name="xkeen.tar.gz.sha256"
-release_fix_url="https://raw.githubusercontent.com/jameszeroX/XKeen/main/01_info_variable.sh"
 
 clear
 echo
@@ -33,20 +32,6 @@ case "$version_choice" in
         ;;
 esac
 echo
-
-get_release_var_file() {
-    if [ -f /opt/sbin/_xkeen/01_info/01_info_variable.sh ]; then
-        printf '%s\n' "/opt/sbin/_xkeen/01_info/01_info_variable.sh"
-        return 0
-    fi
-
-    if [ -f /opt/sbin/.xkeen/01_info/01_info_variable.sh ]; then
-        printf '%s\n' "/opt/sbin/.xkeen/01_info/01_info_variable.sh"
-        return 0
-    fi
-
-    return 1
-}
 
 download_xkeen_release() {
     if curl -fLo "$archive_name" --connect-timeout 10 -m 180 "$url"; then
@@ -127,41 +112,6 @@ verify_archive_sha256() {
     return 1
 }
 
-download_release_fix() {
-    target_file="$1"
-
-    if curl -fLo "$target_file" --connect-timeout 10 -m 180 "$release_fix_url"; then
-        return 0
-    fi
-
-    if curl -fLo "$target_file" --connect-timeout 10 -m 180 "https://gh-proxy.com/$release_fix_url"; then
-        return 0
-    fi
-
-    if curl -fLo "$target_file" --connect-timeout 10 -m 180 "https://ghfast.top/$release_fix_url"; then
-        return 0
-    fi
-
-    printf "  ${red}Ошибка${reset}: не удалось применить исправление ${yellow}01_info_variable.sh${reset} для релиза ${green}1.1.3.9${reset}\n"
-    return 1
-}
-
-apply_release_1139_yq_fix() {
-    release_var_file="$(get_release_var_file)" || {
-        printf "  ${red}Ошибка${reset}: после распаковки не найден файл ${yellow}01_info_variable.sh${reset}\n"
-        return 1
-    }
-
-    release_version=$(sed -n 's/^xkeen_current_version="\([^"]*\)".*/\1/p' "$release_var_file" | head -n 1)
-    release_build=$(sed -n 's/^xkeen_build="\([^"]*\)".*/\1/p' "$release_var_file" | head -n 1)
-
-    if [ "$release_version" = "1.1.3.9" ] && [ "$release_build" = "Stable" ]; then
-        if ! download_release_fix "$release_var_file"; then
-            return 1
-        fi
-    fi
-}
-
 if ! download_xkeen_release; then
     exit 1
 fi
@@ -180,10 +130,6 @@ rm -f "$archive_name"
 
 if [ ! -x /opt/sbin/xkeen ]; then
     printf "  ${red}Ошибка${reset}: после распаковки не найден исполняемый файл ${yellow}/opt/sbin/xkeen${reset}\n"
-    exit 1
-fi
-
-if ! apply_release_1139_yq_fix; then
     exit 1
 fi
 

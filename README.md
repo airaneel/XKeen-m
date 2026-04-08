@@ -48,10 +48,10 @@ XKeen работает полностью на стороне роутера, н
 - управление IPv6
 - поддержка ядра **Mihomo**
 - быстрое переключение Xray / Mihomo
-- контроль [файловых дескрипторов](https://github.com/jameszeroX/XKeen/blob/main/configuration.md#контроль-файловых-дескрипторов)
-- [внешние списки](https://github.com/jameszeroX/XKeen/blob/main/configuration.md#внешние-списки-портов-и-ip) IP и портов
-- [OffLine](https://github.com/jameszeroX/XKeen/blob/main/configuration.md#offline-установка)‑установка
-- [Self-Hosted](https://github.com/jameszeroX/XKeen/blob/main/configuration.md#self-hosted-прокси-для-загрузки)-прокси для загрузки компонентов
+- контроль [файловых дескрипторов](docs/configuration.md#контроль-файловых-дескрипторов)
+- [внешние списки](docs/configuration.md#внешние-списки-портов-и-ip) IP и портов
+- [OffLine](docs/configuration.md#offline-установка)‑установка
+- [Self-Hosted](docs/configuration.md#self-hosted-прокси-для-загрузки)-прокси для загрузки компонентов
 
 ### Удалено
 
@@ -61,7 +61,7 @@ XKeen работает полностью на стороне роутера, н
 
 ---
 
-### Подробное [описание изменений](https://github.com/jameszeroX/XKeen/blob/main/forkinfo.md)
+### Подробное [описание изменений](docs/forkinfo.md)
 
 ---
 
