@@ -8,14 +8,18 @@ _firewall_emit_routing() {
     # Нужно ПЕРЕД add_prerouting, чтобы избежать накопления правил со старыми
     # списками портов после изменения policy/port_exclude/port_donor.
     # ipt -C идемпотентен только для одного и того же набора аргументов.
+    # Чистит правила xkeen ТОЛЬКО для текущей \$table.
+    # add_prerouting вызывается отдельно для mangle и nat — каждый вызов
+    # должен сносить только правила своей таблицы. Старая версия чистила
+    # обе таблицы за один вызов и удаляла результат предыдущего вызова
+    # (например, mangle создавал udp/connmark правило, а следующий вызов
+    # add_prerouting для nat его сразу же сносил через flush).
     flush_xkeen_rules() {
-        for _t in mangle nat; do
-            ipt -t "\$_t" -S PREROUTING 2>/dev/null | grep -E -- "-j (\$name_chain|RETURN)\$" |
-                grep -E -- "(--mark \$policy_mark|--mark 0x[0-9a-fA-F]+ .* -j (\$name_chain|RETURN)\$|^-A PREROUTING -m conntrack ! --ctstate INVALID .* -j \$name_chain\$)" |
-                sed 's/^-A /-D /' | while IFS= read -r _r; do
-                    [ -n "\$_r" ] && ipt -t "\$_t" \$_r >/dev/null 2>&1
-                done
-        done
+        ipt -S PREROUTING 2>/dev/null | grep -E -- "-j (\$name_chain|RETURN)\$" |
+            grep -E -- "(--mark \$policy_mark|--mark 0x[0-9a-fA-F]+ .* -j (\$name_chain|RETURN)\$|^-A PREROUTING -m conntrack ! --ctstate INVALID .* -j \$name_chain\$)" |
+            sed 's/^-A /-D /' | while IFS= read -r _r; do
+                [ -n "\$_r" ] && ipt \$_r >/dev/null 2>&1
+            done
     }
 
     # Создание множественных правил multiport
