@@ -21,6 +21,53 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+      - name: Shellcheck (errors only)
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # POSIX sh, только error-уровень — warning'ов в существующем коде много,
+          # их затягиваем отдельно. Здесь — гейт против реальных синтаксических ошибок.
+          find scripts install.sh -name '*.sh' -type f -print0 \
+            | xargs -0 shellcheck -s sh -S error
+          shellcheck -s sh -S error scripts/xkeen
+
+      - name: Validate assembled S05xkeen init script
+        run: |
+          # Собирает init из init/ модулей и прогоняет sh -n.
+          # Защита от регрессий рефакторинга: если кто-то добавит модуль с битым
+          # синтаксисом, на роутере прокси-клиент молча перестанет запускаться.
+          assembled=$(mktemp)
+          sh scripts/_xkeen/02_install/07_install_register/init/_assemble.sh > "$assembled"
+          sh -n "$assembled"
+          rm -f "$assembled"
+          echo "Assembled S05xkeen syntax OK"
+
+      - name: Sync README header with version from variable file
+        run: |
+          # Источник правды — scripts/_xkeen/01_info/01_info_variable.sh.
+          # README header автоматически держится в синхроне, чтобы не было
+          # хардкода версии в двух местах.
+          var_file="scripts/_xkeen/01_info/01_info_variable.sh"
+          version=$(sed -n 's/^xkeen_current_version="\([^"]*\)".*/\1/p' "$var_file" | head -n 1)
+          build=$(sed -n 's/^xkeen_build="\([^"]*\)".*/\1/p' "$var_file" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "ERROR: не удалось распарсить xkeen_current_version из $var_file"
+            exit 1
+          fi
+          if [ -n "$build" ] && [ "$build" != "Stable" ]; then
+            header="# XKeen $version $build"
+          else
+            header="# XKeen $version"
+          fi
+          # Обновляем только первую строку (заголовок) README
+          if [ "$(head -n 1 README.md)" != "$header" ]; then
+            sed -i "1s|.*|$header|" README.md
+            git add README.md
+            git commit -m "[github-actions] sync README header to $version${build:+ $build}"
+            echo "README header updated to: $header"
+          else
+            echo "README header already up-to-date: $header"
+          fi
+
       - name: Prepare scripts with build timestamp
         run: |
           export TZ="Europe/Moscow"

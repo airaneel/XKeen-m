@@ -1,17 +1,12 @@
 name: Create Release
 
+# Версия релиза НЕ принимается как input — берётся из единственного источника
+# правды scripts/_xkeen/01_info/01_info_variable.sh (xkeen_current_version
+# + xkeen_build). Чтобы выпустить новый релиз: обнови переменные в variable file,
+# запушь, потом запусти этот workflow вручную (workflow_dispatch).
+# prerelease выводится из xkeen_build: всё, что не "Stable" — pre-release.
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version number (e.g., 1.0.0)'
-        required: true
-        type: string
-      prerelease:
-        description: 'Is this a pre-release?'
-        required: true
-        default: "false"
-        type: boolean
 
 jobs:
   release:
@@ -20,13 +15,53 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        
-      - name: Set up variables
-        id: vars
+
+      - name: Shellcheck (errors only)
         run: |
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
-          echo "ARCHIVE_NAME=xkeen.tar.gz" >> $GITHUB_ENV
-          echo "ARCHIVE_NAME_TAR=xkeen.tar" >> $GITHUB_ENV
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # POSIX sh, error-уровень. Релиз не поедет если есть синтаксические ошибки.
+          find scripts install.sh -name '*.sh' -type f -print0 \
+            | xargs -0 shellcheck -s sh -S error
+          shellcheck -s sh -S error scripts/xkeen
+
+      - name: Validate assembled S05xkeen init script
+        run: |
+          # См. package-folder.yml — то же самое для релиза.
+          assembled=$(mktemp)
+          sh scripts/_xkeen/02_install/07_install_register/init/_assemble.sh > "$assembled"
+          sh -n "$assembled"
+          rm -f "$assembled"
+          echo "Assembled S05xkeen syntax OK"
+
+      - name: Read version and build channel from variable file
+        run: |
+          # Единственный источник правды для версии XKeen.
+          var_file="scripts/_xkeen/01_info/01_info_variable.sh"
+          version=$(sed -n 's/^xkeen_current_version="\([^"]*\)".*/\1/p' "$var_file" | head -n 1)
+          build=$(sed -n 's/^xkeen_build="\([^"]*\)".*/\1/p' "$var_file" | head -n 1)
+          if [ -z "$version" ]; then
+            echo "ERROR: не удалось распарсить xkeen_current_version из $var_file"
+            exit 1
+          fi
+          # Тег: "2.0" для Stable, "2.0-beta" для Beta, "2.0-rc1" для RC1, и т.д.
+          # Это даёт чистые semver-подобные теги без пробелов в URL.
+          if [ -n "$build" ] && [ "$build" != "Stable" ]; then
+            tag="${version}-$(echo "$build" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')"
+            release_name="${version} ${build}"
+            prerelease="true"
+          else
+            tag="${version}"
+            release_name="${version}"
+            prerelease="false"
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "BUILD=${build}" >> "$GITHUB_ENV"
+          echo "TAG=${tag}" >> "$GITHUB_ENV"
+          echo "RELEASE_NAME=${release_name}" >> "$GITHUB_ENV"
+          echo "PRERELEASE=${prerelease}" >> "$GITHUB_ENV"
+          echo "ARCHIVE_NAME=xkeen.tar.gz" >> "$GITHUB_ENV"
+          echo "ARCHIVE_NAME_TAR=xkeen.tar" >> "$GITHUB_ENV"
+          echo "Releasing: ${release_name} (tag ${tag}, prerelease=${prerelease})"
           
       - name: Prepare scripts with build timestamp
         run: |
@@ -57,9 +92,9 @@ jobs:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }}
-          name: ${{ env.VERSION }}
-          prerelease: ${{ github.event.inputs.prerelease }}
+          tag_name: ${{ env.TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          prerelease: ${{ env.PRERELEASE }}
           files: |
             dist/${{ env.ARCHIVE_NAME }}
             dist/${{ env.ARCHIVE_NAME }}.sha256

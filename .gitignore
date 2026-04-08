@@ -8,7 +8,7 @@
 *~
 .idea/
 .vscode/
-
+.claude/
 # Локальные временные файлы
 *.bak
 *.tmp
