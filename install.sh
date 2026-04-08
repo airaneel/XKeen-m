@@ -6,8 +6,22 @@ yellow="\033[93m"
 light_blue="\033[96m"
 reset="\033[0m"
 
-url_stable="https://github.com/jameszeroX/XKeen/releases/latest/download/xkeen.tar.gz"
-url_beta="https://raw.githubusercontent.com/jameszeroX/XKeen/main/test/xkeen.tar.gz"
+# Базовые префиксы хостов и репо XKeen.
+# install.sh — standalone bootstrap (запускается через `curl ... | sh`),
+# поэтому НЕ может source'ить scripts/_xkeen/01_info/01_info_variable.sh.
+# При смене xkeen_repo также обнови:
+#   - scripts/_xkeen/01_info/01_info_variable.sh (переменная xkeen_repo)
+#   - README.md (один-лайнер установки)
+#   - test/README.md (один-лайнер установки)
+gh="https://github.com"
+gh_raw="https://raw.githubusercontent.com"
+gh_proxy1="https://gh-proxy.com"
+gh_proxy2="https://ghfast.top"
+xkeen_repo="airaneel/XKeen-m"
+xkeen_branch="main"
+
+url_stable="${gh}/${xkeen_repo}/releases/latest/download/xkeen.tar.gz"
+url_beta="${gh_raw}/${xkeen_repo}/${xkeen_branch}/test/xkeen.tar.gz"
 archive_name="xkeen.tar.gz"
 sha256_name="xkeen.tar.gz.sha256"
 
@@ -33,42 +47,38 @@ case "$version_choice" in
 esac
 echo
 
+# Скачивает $2 в $1 с таймаутом $3 секунд. Пробует напрямую, затем через
+# gh_proxy1 и gh_proxy2. quiet=quiet → подавить вывод curl.
+# Успех = curl вернул 0 И файл непустой (защита от пустых ответов CDN).
+fetch_with_mirrors() {
+    out="$1"
+    src="$2"
+    tm="$3"
+    quiet="$4"
+
+    for u in "$src" "${gh_proxy1}/${src}" "${gh_proxy2}/${src}"; do
+        if [ "$quiet" = "quiet" ]; then
+            curl -fLo "$out" --connect-timeout 10 -m "$tm" "$u" 2>/dev/null
+        else
+            curl -fLo "$out" --connect-timeout 10 -m "$tm" "$u"
+        fi
+        [ -s "$out" ] && return 0
+    done
+    rm -f "$out"
+    return 1
+}
+
 download_xkeen_release() {
-    if curl -fLo "$archive_name" --connect-timeout 10 -m 180 "$url"; then
+    if fetch_with_mirrors "$archive_name" "$url" 180; then
         return 0
     fi
-
-    if curl -fLo "$archive_name" --connect-timeout 10 -m 180 "https://gh-proxy.com/$url"; then
-        return 0
-    fi
-
-    if curl -fLo "$archive_name" --connect-timeout 10 -m 180 "https://ghfast.top/$url"; then
-        return 0
-    fi
-
     printf "  ${red}Ошибка${reset}: не удалось загрузить ${yellow}xkeen.tar.gz${reset}\n"
     return 1
 }
 
 # Загружает sha256-чексумму с того же зеркала, что и архив.
-# Возвращает 0 если файл успешно загружен и непуст, 1 если ни одно зеркало не отдало.
 download_sha256() {
-    sha_url="${url}.sha256"
-
-    if curl -fLo "$sha256_name" --connect-timeout 10 -m 60 "$sha_url" 2>/dev/null; then
-        [ -s "$sha256_name" ] && return 0
-    fi
-
-    if curl -fLo "$sha256_name" --connect-timeout 10 -m 60 "https://gh-proxy.com/$sha_url" 2>/dev/null; then
-        [ -s "$sha256_name" ] && return 0
-    fi
-
-    if curl -fLo "$sha256_name" --connect-timeout 10 -m 60 "https://ghfast.top/$sha_url" 2>/dev/null; then
-        [ -s "$sha256_name" ] && return 0
-    fi
-
-    rm -f "$sha256_name"
-    return 1
+    fetch_with_mirrors "$sha256_name" "${url}.sha256" 60 quiet
 }
 
 # Проверяет sha256 архива.

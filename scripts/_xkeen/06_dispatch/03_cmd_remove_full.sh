@@ -105,7 +105,7 @@ cmd_remove_full() {
     echo
     echo -e "  Установить ${yellow}XKeen${reset} заново можно командами:"
     echo
-    echo -e "  ${green}curl -OL https://raw.githubusercontent.com/jameszeroX/XKeen/main/install.sh${reset}"
+    echo -e "  ${green}curl -OL ${xkeen_install_url}${reset}"
     echo -e "  ${green}chmod +x install.sh${reset}"
     echo -e "  ${green}./install.sh${reset}"
 }

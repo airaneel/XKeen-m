@@ -66,25 +66,68 @@ conn_IP1="195.208.4.1"
 conn_IP2="77.88.44.55"
 
 # -------------------------------------
-# URL
+# URL — базовые префиксы (одно место для смены, если меняется хост)
 # -------------------------------------
-xkeen_api_url="https://api.github.com/repos/jameszeroX/xkeen/releases/latest"			# url api для XKeen
-xkeen_jsd_url="https://data.jsdelivr.com/v1/package/gh/jameszeroX/xkeen"			# резервный url api для XKeen
-xkeen_tar_url="https://github.com/jameszeroX/XKeen/releases/latest/download/xkeen.tar.gz"	# url для загрузки XKeen
-xkeen_dev_url="https://raw.githubusercontent.com/jameszeroX/xkeen/main/test/xkeen.tar.gz"	# url для загрузки XKeen dev
-xray_api_url="https://api.github.com/repos/XTLS/Xray-core/releases"				# url api для Xray
-xray_jsd_url="https://data.jsdelivr.com/v1/package/gh/XTLS/Xray-core"				# резервный url api для Xray
-xray_zip_url="https://github.com/XTLS/Xray-core/releases/download"				# url для загрузки Xray
-mihomo_api_url="https://api.github.com/repos/MetaCubeX/mihomo/releases"				# url api для Mihomo
-mihomo_jsd_url="https://data.jsdelivr.com/v1/package/gh/MetaCubeX/mihomo"			# резервный url api для Mihomo
-mihomo_gz_url="https://github.com/MetaCubeX/mihomo/releases/download"				# url для загрузки Mihomo
-yq_upstream_dist_url="https://github.com/mikefarah/yq/releases/latest/download"			# url для загрузки оригинального Yq
-yq_workaround_dist_url="https://github.com/jameszeroX/yq/releases/latest/download"		# url для загрузки рабочего Yq
-gh_proxy1="https://ghfast.top"								        # 1 прокси для загрузок с GitHub
-gh_proxy2="https://gh-proxy.com"								# 2 прокси для загрузок с GitHub
+gh="https://github.com"
+gh_raw="https://raw.githubusercontent.com"
+gh_api="https://api.github.com/repos"
+jsd="https://data.jsdelivr.com/v1/package/gh"
 
-yq_use_workaround="true"									# отключить после исправления issue 2609 (по желанию)
-yq_workaround_issue_url="https://github.com/mikefarah/yq/issues/2609"				# issue с поломанным релизом Yq
+# Прокси для загрузок с GitHub (когда GH недоступен напрямую)
+gh_proxy1="https://ghfast.top"
+gh_proxy2="https://gh-proxy.com"
+
+# -------------------------------------
+# Репозитории — namespace'ы (одно место для смены при форке)
+# -------------------------------------
+# Сам XKeen. ВНИМАНИЕ: при смене обнови также xkeen_repo в install.sh
+# и литералы install URL в README.md и test/README.md (markdown без переменных,
+# install.sh — standalone bootstrap, нет доступа к этому файлу).
+xkeen_repo="airaneel/XKeen-m"
+xkeen_branch="main"
+
+# Репозитории сторонних компонентов (не часть форка XKeen)
+xray_repo="XTLS/Xray-core"
+mihomo_repo="MetaCubeX/mihomo"
+yq_upstream_repo="mikefarah/yq"
+yq_workaround_repo="jameszeroX/yq"
+zkeen_namespace="jameszeroX"            # zkeen-domains, zkeen-ip
+refilter_repo="1andrevich/Re-filter-lists"
+v2fly_domain_repo="v2fly/domain-list-community"
+v2fly_geoip_repo="loyalsoldier/v2ray-rules-dat"
+
+# -------------------------------------
+# URL — собранные из префиксов и репозиториев
+# -------------------------------------
+# XKeen
+xkeen_api_url="${gh_api}/${xkeen_repo}/releases/latest"
+xkeen_jsd_url="${jsd}/${xkeen_repo}"
+xkeen_tar_url="${gh}/${xkeen_repo}/releases/latest/download/xkeen.tar.gz"
+xkeen_dev_url="${gh_raw}/${xkeen_repo}/${xkeen_branch}/test/xkeen.tar.gz"
+xkeen_install_url="${gh_raw}/${xkeen_repo}/${xkeen_branch}/install.sh"
+xkeen_offline_doc_url="${gh}/${xkeen_repo}/blob/${xkeen_branch}/docs/configuration.md#offline-установка"
+
+# Xray
+xray_api_url="${gh_api}/${xray_repo}/releases"
+xray_jsd_url="${jsd}/${xray_repo}"
+xray_zip_url="${gh}/${xray_repo}/releases/download"
+
+# Mihomo
+mihomo_api_url="${gh_api}/${mihomo_repo}/releases"
+mihomo_jsd_url="${jsd}/${mihomo_repo}"
+mihomo_gz_url="${gh}/${mihomo_repo}/releases/download"
+
+# Yq (upstream и workaround-форк со совместимым yaml-парсером)
+yq_upstream_dist_url="${gh}/${yq_upstream_repo}/releases/latest/download"
+yq_workaround_dist_url="${gh}/${yq_workaround_repo}/releases/latest/download"
+yq_workaround_issue_url="${gh}/${yq_upstream_repo}/issues/2609"
+
+# Страницы релизов сторонних компонентов (для help-text при OffLine установке)
+xray_releases_page_url="${gh}/${xray_repo}/releases/latest"
+mihomo_releases_page_url="${gh}/${mihomo_repo}/releases/latest"
+yq_releases_page_url="${gh}/${yq_upstream_repo}/releases/latest"
+
+yq_use_workaround="true"  # отключить после исправления issue 2609 (по желанию)
 get_yq_dist_url() {
     if [ "$yq_use_workaround" = "true" ]; then
         printf '%s\n' "$yq_workaround_dist_url"
@@ -93,15 +136,15 @@ get_yq_dist_url() {
     fi
 }
 
-# url для загрузки геофайлов
-refilter_url="https://github.com/1andrevich/Re-filter-lists/releases/latest/download/geosite.dat"
-refilterip_url="https://github.com/1andrevich/Re-filter-lists/releases/latest/download/geoip.dat"
-v2fly_url="https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
-v2flyip_url="https://github.com/loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
-zkeen_url="https://github.com/jameszeroX/zkeen-domains/releases/latest/download/zkeen.dat"
-zkeenip_url="https://github.com/jameszeroX/zkeen-ip/releases/latest/download/zkeenip.dat"
-geoipv4_url="https://github.com/jameszeroX/zkeen-ip/releases/latest/download/ru"
-geoipv6_url="https://github.com/jameszeroX/zkeen-ip/releases/latest/download/ru6"
+# Geo-файлы
+refilter_url="${gh}/${refilter_repo}/releases/latest/download/geosite.dat"
+refilterip_url="${gh}/${refilter_repo}/releases/latest/download/geoip.dat"
+v2fly_url="${gh}/${v2fly_domain_repo}/releases/latest/download/dlc.dat"
+v2flyip_url="${gh}/${v2fly_geoip_repo}/releases/latest/download/geoip.dat"
+zkeen_url="${gh}/${zkeen_namespace}/zkeen-domains/releases/latest/download/zkeen.dat"
+zkeenip_url="${gh}/${zkeen_namespace}/zkeen-ip/releases/latest/download/zkeenip.dat"
+geoipv4_url="${gh}/${zkeen_namespace}/zkeen-ip/releases/latest/download/ru"
+geoipv6_url="${gh}/${zkeen_namespace}/zkeen-ip/releases/latest/download/ru6"
 
 # -------------------------------------
 # Создание директорий и файлов

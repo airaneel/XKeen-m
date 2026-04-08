@@ -34,11 +34,11 @@ cmd_install_offline() {
         echo -e "  ${red}Не найдено ядро проксирования xray или mihomo${reset}"
         echo
         echo -e "  Если планируете использовать ядро xray, поместите бинарник ${yellow}xray${reset}\n  архитектуры ${green}$architecture${reset} в директорию /opt/sbin/ и начните установку снова"
-        echo -e "  Страница загрузок xray: ${yellow}https://github.com/XTLS/Xray-core/releases/latest${reset}"
+        echo -e "  Страница загрузок xray: ${yellow}${xray_releases_page_url}${reset}"
         echo
         echo -e "  Если планируете использовать ядро mihomo, поместите бинарники ${yellow}mihomo${reset} и ${yellow}yq${reset}\n  архитектуры ${green}$architecture${reset} в директорию /opt/sbin/ и начните установку снова"
-        echo -e "  Страница загрузок mihomo: ${yellow}https://github.com/MetaCubeX/mihomo/releases/latest${reset}"
-        echo -e "  Страница загрузок yq: ${yellow}https://github.com/mikefarah/yq/releases/latest${reset}"
+        echo -e "  Страница загрузок mihomo: ${yellow}${mihomo_releases_page_url}${reset}"
+        echo -e "  Страница загрузок yq: ${yellow}${yq_releases_page_url}${reset}"
         echo
         exit 1
     fi
