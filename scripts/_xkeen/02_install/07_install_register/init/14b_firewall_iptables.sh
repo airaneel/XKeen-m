@@ -86,6 +86,19 @@ _firewall_emit_iptables() {
         if [ -n "\$policy_mark" ]; then
             policy_table=\$(ip rule show | awk -v policy="\$policy_mark" '\$0 ~ policy && /lookup/ && !/blackhole/ {print \$(NF)}' | sed -n '1p')
             source_table="\$policy_table"
+            # Политика Keenetic может существовать как правило маркировки, но её
+            # таблица при этом пустая — маршрутизация проваливается в main по
+            # правилу 32766, и для TCP всё работает. Искать default в такой
+            # таблице бессмысленно: он там не появится никогда, check_default
+            # ниже падает все 4 раза, configure_route выходит по return 1 и НЕ
+            # создаёт policy-маршрут для TPROXY. Правило же на остановке
+            # удаляется безусловно, поэтому после первого рестарта весь UDP
+            # молча пропадает: TPROXY метит пакеты 0x111, а отдать их локальному
+            # сокету xray некому. Ловилось так: 0 UDP до сервера при ~50 тыс. TCP
+            # за сутки, счётчик TPROXY при этом честно тикает. (16.08.2026)
+            if [ -n "\$policy_table" ] && ! ip -\$ip_version route show table "\$policy_table" 2>/dev/null | grep -q .; then
+                source_table="main"
+            fi
         else
             source_table="main"
         fi
