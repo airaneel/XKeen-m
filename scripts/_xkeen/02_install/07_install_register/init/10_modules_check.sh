@@ -1,7 +1,29 @@
 
-# Проверка, загружен ли модуль ядра. Принимает имя без расширения (например xt_TPROXY).
+# Проверка, доступен ли модуль ядра. Принимает имя без расширения (например xt_TPROXY).
+# Match/target может быть вкомпилирован в ядро — тогда его нет ни в lsmod, ни в
+# /lib/modules, но он полностью работает. Поэтому при промахе по lsmod проверяем
+# функционально: пробуем собрать правило во временной цепочке. Без этого на
+# прошивках со встроенным multiport (KeeneticOS 5.02) get_modules молча обнулял
+# port_donor/port_exclude, и прокси поднимался на всех портах, игнорируя
+# исключения — при каждом старте, без единой ошибки в логе. (19.08.2026)
 is_module_loaded() {
-    lsmod | awk '{print $1}' | grep -qx "$1"
+    lsmod | awk '{print $1}' | grep -qx "$1" && return 0
+
+    case "$1" in
+        xt_multiport) set -- -p tcp -m multiport --dports 1,2 -j RETURN ;;
+        xt_dscp)      set -- -m dscp --dscp 0x00 -j RETURN ;;
+        xt_socket)    set -- -m socket -j RETURN ;;
+        xt_TPROXY)    set -- -p tcp -j TPROXY --on-port 1 --tproxy-mark 1 ;;
+        *)            return 1 ;;
+    esac
+
+    probe_chain="xkeen_probe_$$"
+    iptables -w -t mangle -N "$probe_chain" >/dev/null 2>&1 || return 1
+    iptables -w -t mangle -A "$probe_chain" "$@" >/dev/null 2>&1
+    probe_rc=$?
+    iptables -w -t mangle -F "$probe_chain" >/dev/null 2>&1
+    iptables -w -t mangle -X "$probe_chain" >/dev/null 2>&1
+    return "$probe_rc"
 }
 
 # Загрузка модулей
